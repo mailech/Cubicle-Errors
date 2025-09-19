@@ -7,8 +7,7 @@ class ToyDataset:
         self.data = data
 
     def __len__(self) -> int:
-        # BUG: Wrong length, off-by-one to trigger test failures
-        return len(self.data) + 1
+        return len(self.data)
 
     def __getitem__(self, idx: int) -> int:
         return self.data[idx]
