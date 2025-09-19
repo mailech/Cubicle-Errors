@@ -21,17 +21,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify Sentinel of CI failure
-        run: |
-          curl -sS -X POST "$SENTINEL_URL/webhooks/ci/failure"             -H "Content-Type: application/json"             -H "X-GitHub-Event: workflow_run"             -d @- <<'JSON'
-          {
-            "repo": "${{ github.repository }}",
-            "failing_test": "tests/test_ml_errors.py",
-            "logs": "pytest failure (redacted)",
-            "diff": "diff --git a/ml_errors/dataloader.py b/ml_errors/dataloader.py
--        return len(self.data) + 1
-+        return len(self.data)
-"
-          }
-          JSON
+        uses: actions/github-script@v7
         env:
           SENTINEL_URL: ${{ secrets.SENTINEL_URL }}
+        with:
+          script: |
+            const url = `${process.env.SENTINEL_URL}/webhooks/ci/failure`;
+            const payload = {
+              repo: process.env.GITHUB_REPOSITORY,
+              failing_test: 'tests/test_ml_errors.py',
+              logs: 'pytest failure (redacted)',
+              diff: 'diff --git a/ml_errors/dataloader.py b/ml_errors/dataloader.py\n-        return len(self.data) + 1\n+        return len(self.data)\n'
+            };
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-GitHub-Event': 'workflow_run' },
+              body: JSON.stringify(payload)
+            });
+            core.info(`Sentinel response status: ${res.status}`);
