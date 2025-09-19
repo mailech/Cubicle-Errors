@@ -1,0 +1,38 @@
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+
+  notify-sentinel:
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Sentinel of CI failure
+        run: |
+          curl -sS -X POST "$SENTINEL_URL/webhooks/ci/failure"             -H "Content-Type: application/json"             -H "X-GitHub-Event: workflow_run"             -d @- <<'JSON'
+          {
+            "repo": "${{ github.repository }}",
+            "failing_test": "tests/test_ml_errors.py",
+            "logs": "pytest failure (redacted)",
+            "diff": "diff --git a/ml_errors/dataloader.py b/ml_errors/dataloader.py
+-        return len(self.data) + 1
++        return len(self.data)
+"
+          }
+          JSON
+        env:
+          SENTINEL_URL: ${{ secrets.SENTINEL_URL }}
