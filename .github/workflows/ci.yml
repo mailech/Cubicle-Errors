@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -36,10 +37,7 @@ jobs:
               repo: process.env.GITHUB_REPOSITORY,
               failing_test: 'tests/test_ml_errors.py',
               logs: 'pytest failure (redacted)',
-              diff: 'diff --git a/ml_errors/dataloader.py b/ml_errors/dataloader.py
--        return len(self.data) + 1
-+        return len(self.data)
-'
+              diff: 'diff --git a/ml_errors/dataloader.py b/ml_errors/dataloader.py\n-        return len(self.data) + 1\n+        return len(self.data)\n'
             };
             const res = await fetch(url, {
               method: 'POST',
